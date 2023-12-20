@@ -3,10 +3,10 @@ const inquirer = require('inquirer');
 
 // Create a connection to the MySQL database
 const connection = mysql.createConnection({
-  host: 'your_database_host',
-  user: 'your_username',
-  password: 'your_password',
-  database: 'your_database_name'
+  host: 'localhost',
+  user: 'root',
+  password: '',
+  database: 'employee_db'
 });
 
 // Connect to the database
@@ -124,22 +124,127 @@ function addDepartment() {
 }
 
 // Function to add a role
-function addRole() {
-  // Implement logic to add a role
-  // Similar to addDepartment, prompt user for role details and execute SQL query to insert data
-}
+
+    function addRole() {
+        inquirer
+          .prompt([
+            {
+              type: 'input',
+              name: 'title',
+              message: 'Enter the role title:'
+            },
+            {
+              type: 'number',
+              name: 'salary',
+              message: 'Enter the role salary:'
+            },
+            {
+              type: 'number',
+              name: 'department_id',
+              message: 'Enter the department ID for this role:'
+            }
+          ])
+          .then(answer => {
+            connection.query(
+              'INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)',
+              [answer.title, answer.salary, answer.department_id],
+              err => {
+                if (err) throw err;
+                console.log('Role added successfully!');
+                mainMenu();
+              }
+            );
+          })
+          .catch(error => {
+            console.log('Error:', error);
+          });
+      }
+
 
 // Function to add an employee
 function addEmployee() {
-  // Implement logic to add an employee
-  // Prompt user for employee details and execute SQL query to insert data
-}
+    inquirer
+      .prompt([
+        {
+          type: 'input',
+          name: 'first_name',
+          message: 'Enter the employee\'s first name:'
+        },
+        {
+          type: 'input',
+          name: 'last_name',
+          message: 'Enter the employee\'s last name:'
+        },
+        {
+          type: 'number',
+          name: 'role_id',
+          message: 'Enter the role ID for this employee:'
+        },
+        {
+          type: 'number',
+          name: 'manager_id',
+          message: 'Enter the manager\'s ID for this employee (if none, leave blank):'
+        }
+      ])
+      .then(answer => {
+        connection.query(
+          'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)',
+          [answer.first_name, answer.last_name, answer.role_id, answer.manager_id || null],
+          err => {
+            if (err) throw err;
+            console.log('Employee added successfully!');
+            mainMenu();
+          }
+        );
+      })
+      .catch(error => {
+        console.log('Error:', error);
+      });
+  }
+  
 
 // Function to update an employee role
 function updateEmployeeRole() {
-  // Implement logic to update an employee role
-  // Prompt user for employee and new role details and execute SQL query to update data
-}
+    // Fetching employee IDs and roles from the database to display choices to the user
+    connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS full_name FROM employee', (err, employees) => {
+      if (err) throw err;
+  
+      connection.query('SELECT id, title FROM role', (err, roles) => {
+        if (err) throw err;
+  
+        inquirer
+          .prompt([
+            {
+              type: 'list',
+              name: 'employee_id',
+              message: 'Select the employee to update:',
+              choices: employees.map(employee => ({ name: employee.full_name, value: employee.id }))
+            },
+            {
+              type: 'list',
+              name: 'role_id',
+              message: 'Select the new role for the employee:',
+              choices: roles.map(role => ({ name: role.title, value: role.id }))
+            }
+          ])
+          .then(answer => {
+            connection.query(
+              'UPDATE employee SET role_id = ? WHERE id = ?',
+              [answer.role_id, answer.employee_id],
+              err => {
+                if (err) throw err;
+                console.log('Employee role updated successfully!');
+                mainMenu();
+              }
+            );
+          })
+          .catch(error => {
+            console.log('Error:', error);
+          });
+      });
+    });
+  }
+  
 
 // Initialize the application
 function init() {

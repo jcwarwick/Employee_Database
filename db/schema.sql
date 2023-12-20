@@ -1,3 +1,5 @@
+USE employee_db;
+
 -- Create department table
 CREATE TABLE IF NOT EXISTS department (
     id INTEGER PRIMARY KEY,
